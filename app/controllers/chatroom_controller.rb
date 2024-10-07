@@ -46,7 +46,6 @@ class ChatroomController < ApplicationController
 
   def generate_explanation(results)
     results = results.map do |result|
-      #puts result.to_h
       result.to_h
     end
     results.join('\n')
