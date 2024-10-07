@@ -3,6 +3,21 @@ require 'neo4j_ruby_driver'
 require './config/initializers/neo4j'
 
 class ChatroomController < ApplicationController
+
+  @@explanation_system_message = "
+  You are an AI model that specializes in interpreting data results from a Neo4j database.
+  Given the results in the format below, your task is to provide a clear and concise explanation for each entry, highlighting the key information such as the attributes n(area) and price.
+  Your explanation must be written not with topics but as a continuous text in an informal speech.
+
+  Data Format:
+
+  Each entry represents an apartment with the following attributes:
+  n: A numerical value representing the area
+  price: The market price of the apartment
+  index: The position of the entry in the result set
+  @labels: The category of the entry (e.g., :Apartamento)
+  "
+
   def send_message
     user_message = params[:message]
     # response_message = get_openai_response(user_message)
@@ -12,14 +27,14 @@ class ChatroomController < ApplicationController
 
   private
 
-  def get_openai_response(message)
+  def get_openai_response(prompt, system_message)
     client = OpenAI::Client.new
     response = client.chat(
       parameters: {
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are a helpful assistant." },
-          { role: "user", content: message }
+          { role: "system", content: system_message},
+          { role: "user", content: prompt }
         ]
       }
     )
@@ -44,11 +59,13 @@ class ChatroomController < ApplicationController
     end
   end
 
-  def generate_explanation(results)
-    results = results.map do |result|
-      result.to_h
+  def generate_explanation(nodes)
+    nodes = nodes.map do |node|
+      node.to_h
     end
-    results.join('\n')
+    prompt = nodes.join('\n')
+    explanation = get_openai_response(prompt, @@explanation_system_message)
+    explanation
   end
 
   def handle_user_query(user_input)
