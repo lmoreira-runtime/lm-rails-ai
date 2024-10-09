@@ -19,20 +19,35 @@ class ChatroomController < ApplicationController
   "
 
   @@request_system_message = "
-  You are an AI assistant for a real estate search platform. The database has three key entities: 'Apartamento,' 'Type,' and 'Location.' The 'Apartamento' entity represents apartments, and each apartment is associated with a 'Type' (such as T0, T1, T2, etc.), a 'Location' (e.g., specific cities or neighborhoods), an area (in square meters), and a price (in the chosen currency).
+  You are a highly skilled system designed to convert natural language user requests into Cypher (CQL) queries for a Neo4j database. The user may ask questions or request information about apartments, such as type, location, area, and price.
+
+  ###DATABASE_SCHEMA###
+
+  This is a JSON for describing the database nodes:
+  ###NODES###
   
-  Your task is to analyze the user's request and identify the filtering parameters related to apartment type, location, area, and price. Return a JSON object with four fields: 'type,' 'location,' 'area,' and 'price.' If any of these fields are not explicitly mentioned in the user’s request, return them as null. For area and price, handle ranges if the user specifies them. If there are multiple matching options, list them as an array.
-  
-  **Example input:**
-  \"I am looking for a two-bedroom apartment in Lisbon, between 80-100 square meters, and under 300,000 euros.\"
-  
-  **Expected JSON output:**
-  {
-    \"type\": [\"T2\"],
-    \"location\": [\"Lisbon\"],
-    \"area\": {\"min\": 80, \"max\": 100},
-    \"price\": {\"max\": 300000}
-  }
+  This is a JSON for describing the database relationships between nodes:
+  ###RELATIONSHIPS###
+
+  Your task is to:
+  1. Analyze the user request to understand the desired apartment characteristics.
+  2. Translate the user's request into an optimized CQL query that accurately retrieves data from the Neo4j database.
+
+  You MUST NOT:
+  1. Generate a query for removing data.
+  2. Generate a query for changing the relationships between nodes.
+  3. Generate a query for changing the properties of nodes or relationships.
+  4. Add any text to the response other than the query itself.
+
+  ###EXAMPLE###
+
+  User Request: I am looking for a 2-bedroom apartment in the city of Porto with an area of at least 100 square meters and a price range between $200,000 and $300,000.
+
+  CQL Query: 
+  MATCH (a:Apartamento)-[:OF_TYPE]->(t:Type), 
+  (a)-[:LOCATED_IN]->(l:Location)
+  WHERE t.name = 'T2' AND l.name = 'Porto' AND a.area >= 100 AND a.price >= 200000 AND a.price <= 300000
+  RETURN a
   "
 
   def send_message
@@ -60,41 +75,13 @@ class ChatroomController < ApplicationController
   end
 
   def translate_to_cql(user_input)
-    llm_filters = get_openai_response(user_input, @@request_system_message)
-    filters = JSON.parse(llm_filters)
-
-    apartment_type = filters['type']
-    location = filters['location']
-    area_min = filters.dig('area', 'min')
-    area_max = filters.dig('area', 'max')
-    price_min = filters.dig('price', 'min')
-    price_max = filters.dig('price', 'max')
-
-    cql = "
-    MATCH (a:Apartamento)-[:OF_TYPE]->(t:Type), 
-    (a)-[:LOCATED_IN]->(l:Location)
-    where 1=1"
-
-    if apartment_type 
-      cql += " AND t.name IN ['" + apartment_type.join(',') + "']" 
-    end
-    if location 
-      cql += " AND l.name IN ['" + location.join(',') + "']"
-    end
-    if area_min 
-      cql += " AND a.area >= " + area_min.to_s
-    end
-    if area_max 
-      cql += " AND a.area <= " + area_max.to_s
-    end
-    if price_min 
-      cql += " AND a.price >= " + price_min.to_s
-    end
-    if price_max 
-      cql += " AND a.price <= " + price_max.to_s
-    end
-    cql += " RETURN a"
-    puts cql
+    @db_nodes = Neo4jSchema.db_nodes
+    @db_relationships = Neo4jSchema.db_relationships
+    my_system_message = @@request_system_message
+    my_system_message = my_system_message.sub("###NODES###", @db_nodes)
+    my_system_message = my_system_message.sub("###RELATIONSHIPS###", @db_relationships)
+    puts my_system_message
+    cql = get_openai_response(user_input, my_system_message)
     cql
   end
 
@@ -120,10 +107,10 @@ class ChatroomController < ApplicationController
 
   def handle_user_query(user_input)
     cql = translate_to_cql(user_input)
-    results = query_neo4j(cql)
-    explanation = generate_explanation(results)
+    # results = query_neo4j(cql)
+    # explanation = generate_explanation(results)
   
-    explanation
+    cql
   end
 
 end

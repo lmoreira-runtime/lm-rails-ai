@@ -1,0 +1,20 @@
+﻿[
+  {
+    "RelationshipType": "OF_TYPE",
+    "StartNodeLabels": [
+      "Apartamento"
+    ],
+    "EndNodeLabels": [
+      "Type"
+    ]
+  },
+  {
+    "RelationshipType": "LOCATED_IN",
+    "StartNodeLabels": [
+      "Apartamento"
+    ],
+    "EndNodeLabels": [
+      "Location"
+    ]
+  }
+]
