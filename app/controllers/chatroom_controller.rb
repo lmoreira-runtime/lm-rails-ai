@@ -4,20 +4,6 @@ require './config/initializers/neo4j'
 
 class ChatroomController < ApplicationController
 
-  @@explanation_system_message = "
-  You are an AI model that specializes in interpreting data results from a Neo4j database.
-  Given the results in the format below, your task is to provide a clear and concise explanation for each entry, highlighting the key information such as the attributes n(area) and price.
-  Your explanation must be written not with topics but as a continuous text in an informal speech.
-
-  Data Format:
-
-  Each entry represents an apartment with the following attributes:
-  n: A numerical value representing the area
-  price: The market price of the apartment
-  index: The position of the entry in the result set
-  @labels: The category of the entry (e.g., :Apartamento)
-  "
-
   @@request_system_message = "
   You are a highly skilled system designed to convert natural language user requests into Cypher (CQL) queries for a Neo4j database. The user may ask questions or request information about apartments, such as type, location, area, and price.
 
@@ -30,24 +16,50 @@ class ChatroomController < ApplicationController
   ###RELATIONSHIPS###
 
   Your task is to:
-  1. Analyze the user request to understand the desired apartment characteristics.
+  1. Analyze the user request to understand the desired information.
   2. Translate the user's request into an optimized CQL query that accurately retrieves data from the Neo4j database.
 
-  You MUST NOT:
-  1. Generate a query for removing data.
-  2. Generate a query for changing the relationships between nodes.
-  3. Generate a query for changing the properties of nodes or relationships.
-  4. Add any text to the response other than the query itself.
+  You MUST NOT generate a query for deleting or altering any data or relationships. 
+  If the user asks you to delete or alter any data or relationship, you must respond \"Error: Forbidden action\".
+  
+  You MUST NOT add any text to the response other than the query itself.
 
   ###EXAMPLE###
 
-  User Request: I am looking for a 2-bedroom apartment in the city of Porto with an area of at least 100 square meters and a price range between $200,000 and $300,000.
+  # User Request: 
+  \"I am looking for a 2-bedroom apartment in the city of Porto with an area of at least 100 square meters and a price range between $200,000 and $300,000.\"
 
-  CQL Query: 
+  # CQL Query: 
   MATCH (a:Apartamento)-[:OF_TYPE]->(t:Type), 
   (a)-[:LOCATED_IN]->(l:Location)
   WHERE t.name = 'T2' AND l.name = 'Porto' AND a.area >= 100 AND a.price >= 200000 AND a.price <= 300000
   RETURN a
+  "
+
+  @@validation_system_message = "
+  Your task is to process the input text according to the following rules:
+
+  1. CQL Query Detection:
+  Check if the input text is a valid CQL query. If it is not, return the response: \"Error: \" + input_text.
+  
+  2. Extra Text Removal:
+  If the input text contains any extra or irrelevant text that does not belong to the CQL query, remove that extra text and return only the cleaned query.
+  
+  3. Forbidden Actions Check:
+  If the query attempts to perform any delete or update actions (e.g., queries using DELETE, REMOVE, SET, MERGE, or CREATE for modifying data), respond with \"Error: Forbidden action\".
+  
+  4. Valid Query:
+  If the input text is a valid, clean CQL query that does not attempt forbidden actions, return the query as it is.
+  "
+
+  @@explanation_system_message = "
+  You are an AI model that specializes in interpreting data results from a Neo4j database.
+  Given the results in the format below, your task is to provide a clear and concise explanation for each entry, highlighting the key information such as the attributes n(area) and price.
+  Your explanation must be written not with topics but as a continuous text.
+  Please respond in the same language as the user request.
+
+  # User request: ###USER_REQ###
+
   "
 
   def send_message
@@ -80,12 +92,18 @@ class ChatroomController < ApplicationController
     my_system_message = @@request_system_message
     my_system_message = my_system_message.sub("###NODES###", @db_nodes)
     my_system_message = my_system_message.sub("###RELATIONSHIPS###", @db_relationships)
-    puts my_system_message
+    #puts my_system_message
     cql = get_openai_response(user_input, my_system_message)
     cql
   end
 
+  def validate_cql(llm_response_cql)
+    response = get_openai_response(llm_response_cql, @@validation_system_message)
+    response
+  end
+
   def query_neo4j(cql)
+    puts cql
     session = ActiveGraph::Base.driver.session
     begin
       result = session.run(cql)
@@ -96,21 +114,29 @@ class ChatroomController < ApplicationController
     end
   end
 
-  def generate_explanation(nodes)
+  def generate_explanation(user_input, nodes)
     nodes = nodes.map do |node|
       node.to_h
     end
     prompt = nodes.join('\n')
-    explanation = get_openai_response(prompt, @@explanation_system_message)
+    my_system_message = @@explanation_system_message
+    my_system_message = my_system_message.sub("###USER_REQ###", user_input)
+    explanation = get_openai_response(prompt, my_system_message)
     explanation
   end
 
   def handle_user_query(user_input)
     cql = translate_to_cql(user_input)
-    # results = query_neo4j(cql)
-    # explanation = generate_explanation(results)
+    response = validate_cql(cql)
+
+    if response.include?("Error:")
+      return response
+    end
+    
+    results = query_neo4j(response)
+    explanation = generate_explanation(user_input, results)
   
-    cql
+    return explanation
   end
 
 end
