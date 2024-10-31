@@ -1,0 +1,56 @@
+﻿[
+  {
+    "RelationshipType": "ACTED_IN",
+    "StartNodeLabels": [
+      "Person"
+    ],
+    "EndNodeLabels": [
+      "Movie"
+    ]
+  },
+  {
+    "RelationshipType": "DIRECTED",
+    "StartNodeLabels": [
+      "Person"
+    ],
+    "EndNodeLabels": [
+      "Movie"
+    ]
+  },
+  {
+    "RelationshipType": "PRODUCED",
+    "StartNodeLabels": [
+      "Person"
+    ],
+    "EndNodeLabels": [
+      "Movie"
+    ]
+  },
+  {
+    "RelationshipType": "WROTE",
+    "StartNodeLabels": [
+      "Person"
+    ],
+    "EndNodeLabels": [
+      "Movie"
+    ]
+  },
+  {
+    "RelationshipType": "FOLLOWS",
+    "StartNodeLabels": [
+      "Person"
+    ],
+    "EndNodeLabels": [
+      "Person"
+    ]
+  },
+  {
+    "RelationshipType": "REVIEWED",
+    "StartNodeLabels": [
+      "Person"
+    ],
+    "EndNodeLabels": [
+      "Movie"
+    ]
+  }
+]

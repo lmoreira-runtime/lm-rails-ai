@@ -3,11 +3,11 @@ require 'neo4j_ruby_driver'
 require './config/initializers/neo4j'
 
 class ChatroomController < ApplicationController
-
+  
   @@request_system_message = "
-  You are a highly skilled system designed to convert natural language user requests into Cypher (CQL) queries for a Neo4j database. The user may ask questions or request information about apartments, such as type, location, area, and price.
+  You are a highly skilled system designed to convert natural language user requests into Cypher (CQL) queries for a Neo4j database. The user may ask questions or request information about any information within the database.
 
-  ###DATABASE_SCHEMA###
+  **DATABASE_SCHEMA**
 
   This is a JSON for describing the database nodes:
   ###NODES###
@@ -24,16 +24,9 @@ class ChatroomController < ApplicationController
   
   You MUST NOT add any text to the response other than the query itself.
 
+  **EXAMPLE**
+
   ###EXAMPLE###
-
-  # User Request: 
-  \"I am looking for a 2-bedroom apartment in the city of Porto with an area of at least 100 square meters and a price range between $200,000 and $300,000.\"
-
-  # CQL Query: 
-  MATCH (a:Apartamento)-[:OF_TYPE]->(t:Type), 
-  (a)-[:LOCATED_IN]->(l:Location)
-  WHERE t.name = 'T2' AND l.name = 'Porto' AND a.area >= 100 AND a.price >= 200000 AND a.price <= 300000
-  RETURN a
   "
 
   @@validation_system_message = "
@@ -59,8 +52,11 @@ class ChatroomController < ApplicationController
   Please respond in the same language as the user request.
 
   # User request: ###USER_REQ###
-
   "
+
+  def initialize()
+    @@prompt_result_example ||= File.read(ENV['PROMPT_RESULT_EXAMPLE_PATH'])
+  end
 
   def send_message
     user_message = params[:message]
@@ -92,6 +88,7 @@ class ChatroomController < ApplicationController
     my_system_message = @@request_system_message
     my_system_message = my_system_message.sub("###NODES###", @db_nodes)
     my_system_message = my_system_message.sub("###RELATIONSHIPS###", @db_relationships)
+    my_system_message = my_system_message.sub("###EXAMPLE###", @@prompt_result_example)
     #puts my_system_message
     cql = get_openai_response(user_input, my_system_message)
     cql
