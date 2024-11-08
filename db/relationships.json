@@ -16,5 +16,41 @@
     "EndNodeLabels": [
       "Location"
     ]
+  },
+  {
+    "RelationshipType": "WORKS_IN",
+    "StartNodeLabels": [
+      "RealEstateAgent"
+    ],
+    "EndNodeLabels": [
+      "Location"
+    ]
+  },
+  {
+    "RelationshipType": "REPRESENTS",
+    "StartNodeLabels": [
+      "RealEstateAgent"
+    ],
+    "EndNodeLabels": [
+      "Owner"
+    ]
+  },
+  {
+    "RelationshipType": "OWNS",
+    "StartNodeLabels": [
+      "Owner"
+    ],
+    "EndNodeLabels": [
+      "Apartamento"
+    ]
+  },
+  {
+    "RelationshipType": "HAS_AMENITY",
+    "StartNodeLabels": [
+      "Apartamento"
+    ],
+    "EndNodeLabels": [
+      "Amenity"
+    ]
   }
 ]

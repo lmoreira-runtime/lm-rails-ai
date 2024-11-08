@@ -30,5 +30,53 @@
         "name"
       ]
     ]
+  },
+  {
+    "Labels": [
+      "Owner"
+    ],
+    "AssociatedProperties": [
+      [
+        "name",
+        "contact_info"
+      ]
+    ]
+  },
+  {
+    "Labels": [
+      "Amenity"
+    ],
+    "AssociatedProperties": [
+      [
+        "name"
+      ]
+    ]
+  },
+  {
+    "Labels": [
+      "RealEstateAgent"
+    ],
+    "AssociatedProperties": [
+      [
+        "name",
+        "contact_info",
+        "location"
+      ],
+      [
+        "location",
+        "name",
+        "contact_info"
+      ],
+      [
+        "contact_info",
+        "location",
+        "name"
+      ],
+      [
+        "name",
+        "location",
+        "contact_info"
+      ]
+    ]
   }
 ]

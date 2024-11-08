@@ -1,8 +1,10 @@
   # User Request: 
-  \"I am looking for a 2-bedroom apartment in the city of Porto with an area of at least 100 square meters and a price range between $200,000 and $300,000.\"
+  \"give me one example of an apartment in Porto, its owner, the agent who works in the same location and represents the owner, and the apartment amenities\"
 
   # CQL Query: 
-  MATCH (a:Apartamento)-[:OF_TYPE]->(t:Type), 
-  (a)-[:LOCATED_IN]->(l:Location)
-  WHERE t.name = 'T2' AND l.name = 'Porto' AND a.area >= 100 AND a.price >= 200000 AND a.price <= 300000
-  RETURN a
+  MATCH (a:Apartamento)-[:LOCATED_IN]->(l:Location), 
+      (a)<-[:OWNS]-(o:Owner), 
+      (o)<-[:REPRESENTS]-(ra:RealEstateAgent)-[:WORKS_IN]->(l), 
+      (a)-[:HAS_AMENITY]->(amenity:Amenity) 
+  WHERE l.name = 'Porto' 
+  RETURN a, o, ra, amenity LIMIT 1

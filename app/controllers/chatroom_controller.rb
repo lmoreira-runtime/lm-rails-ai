@@ -18,11 +18,7 @@ class ChatroomController < ApplicationController
   Your task is to:
   1. Analyze the user request to understand the desired information.
   2. Translate the user's request into an optimized CQL query that accurately retrieves data from the Neo4j database.
-
-  You MUST NOT generate a query for deleting or altering any data or relationships. 
-  If the user asks you to delete or alter any data or relationship, you must respond \"Error: Forbidden action\".
-  
-  You MUST NOT add any text to the response other than the query itself.
+  3. Generate only a valid Cypher query (CQL) based on the user's instructions. Do not include any comments, explanations, formatting, or additional text. Provide the query as plain text, with no leading or trailing characters.
 
   **EXAMPLE**
 
@@ -30,19 +26,9 @@ class ChatroomController < ApplicationController
   "
 
   @@validation_system_message = "
-  Your task is to process the input text according to the following rules:
-
-  1. CQL Query Detection:
-  Check if the input text is a valid CQL query. If it is not, return the response: \"Error: \" + input_text.
-  
-  2. Extra Text Removal:
-  If the input text contains any extra or irrelevant text that does not belong to the CQL query, remove that extra text and return only the cleaned query.
-  
-  3. Forbidden Actions Check:
+  Your task is to prevent the CQL query of altering data in the database.
   If the query attempts to perform any delete or update actions (e.g., queries using DELETE, REMOVE, SET, MERGE, or CREATE for modifying data), respond with \"Error: Forbidden action\".
-  
-  4. Valid Query:
-  If the input text is a valid, clean CQL query that does not attempt forbidden actions, return the query as it is.
+  Otherwise, simply respond \"OK\".
   "
 
   @@explanation_system_message = "
@@ -89,18 +75,18 @@ class ChatroomController < ApplicationController
     my_system_message = my_system_message.sub("###NODES###", @db_nodes)
     my_system_message = my_system_message.sub("###RELATIONSHIPS###", @db_relationships)
     my_system_message = my_system_message.sub("###EXAMPLE###", @@prompt_result_example)
-    #puts my_system_message
     cql = get_openai_response(user_input, my_system_message)
+    puts ("# CQL: #{cql}\n")
     cql
   end
 
   def validate_cql(llm_response_cql)
     response = get_openai_response(llm_response_cql, @@validation_system_message)
+    puts("# Validation: #{response}")
     response
   end
 
   def query_neo4j(cql)
-    puts cql
     session = ActiveGraph::Base.driver.session
     begin
       result = session.run(cql)
@@ -130,7 +116,7 @@ class ChatroomController < ApplicationController
       return response
     end
     
-    results = query_neo4j(response)
+    results = query_neo4j(cql)
     explanation = generate_explanation(user_input, results)
   
     return explanation
