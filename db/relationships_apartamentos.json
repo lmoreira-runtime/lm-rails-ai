@@ -6,7 +6,8 @@
     ],
     "EndNodeLabels": [
       "Type"
-    ]
+    ],
+    "Relationship_text_example": "(:Apartamento)-[:OF_TYPE]->(:Type)"
   },
   {
     "RelationshipType": "LOCATED_IN",
@@ -15,7 +16,8 @@
     ],
     "EndNodeLabels": [
       "Location"
-    ]
+    ],
+    "Relationship_text_example": "(:Apartamento)-[:LOCATED_IN]->(:Location)"
   },
   {
     "RelationshipType": "WORKS_IN",
@@ -24,7 +26,8 @@
     ],
     "EndNodeLabels": [
       "Location"
-    ]
+    ],
+    "Relationship_text_example": "(:RealEstateAgent)-[:WORKS_IN]->(:Location)"
   },
   {
     "RelationshipType": "REPRESENTS",
@@ -33,7 +36,8 @@
     ],
     "EndNodeLabels": [
       "Owner"
-    ]
+    ],
+    "Relationship_text_example": "(:RealEstateAgent)-[:REPRESENTS]->(:Owner)"
   },
   {
     "RelationshipType": "OWNS",
@@ -42,7 +46,8 @@
     ],
     "EndNodeLabels": [
       "Apartamento"
-    ]
+    ],
+    "Relationship_text_example": "(:Owner)-[:OWNS]->(:Apartamento)"
   },
   {
     "RelationshipType": "HAS_AMENITY",
@@ -51,6 +56,7 @@
     ],
     "EndNodeLabels": [
       "Amenity"
-    ]
+    ],
+    "Relationship_text_example": "(:Apartamento)-[:HAS_AMENITY]->(:Amenity)"
   }
 ]

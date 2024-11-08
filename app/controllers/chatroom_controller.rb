@@ -24,11 +24,50 @@ class ChatroomController < ApplicationController
 
   ###EXAMPLE###
   "
-
+  
   @@validation_system_message = "
   Your task is to prevent the CQL query of altering data in the database.
   If the query attempts to perform any delete or update actions (e.g., queries using DELETE, REMOVE, SET, MERGE, or CREATE for modifying data), respond with \"Error: Forbidden action\".
   Otherwise, simply respond \"OK\".
+  "
+  
+  @@compliance_system_message = "
+  You are a database expert specializing in Cypher Query Language (CQL) and schema design. Your task is to analyze the given CQL query and ensure it fully complies with the specified database schema.
+
+  **Tasks**:
+  
+  - Schema Validation:
+
+  Parse the provided DATABASE_SCHEMA JSON to extract node labels, relationship types, and property definitions.
+  Verify that all nodes, relationships, and properties in the query match the schema.
+  Ensure property data types are consistent with schema definitions.
+  
+  - Structural Consistency:
+
+  Ensure the query uses correct labels, relationships, and property names.
+  Verify the use of MATCH, WHERE, RETURN, and DISTINCT aligns with the schema structure and query intent.
+  
+  - Error Correction:
+
+  If the query contains elements not defined in the schema or uses incorrect syntax, correct these issues.
+  If any required elements are missing, add them.
+  Ensure all changes comply with the schema and best practices for CQL.
+  
+  - Response Format:
+
+  Output only the corrected Cypher query as plain text.
+  No comments, explanations, or formatting.
+  If the query is already valid and schema-compliant, return it unchanged.
+
+  **DATABASE_SCHEMA**
+
+  This is a JSON for describing the database nodes:
+  ###NODES###
+  
+  This is a JSON for describing the database relationships between nodes:
+  ###RELATIONSHIPS###
+
+  **IMPORTANT NOTE**: The direction of the relationships has a direct impact on the query's correctness.
   "
 
   @@explanation_system_message = "
@@ -86,11 +125,23 @@ class ChatroomController < ApplicationController
     response
   end
 
+  def make_cql_comply(input_cql)
+    @db_nodes = Neo4jSchema.db_nodes
+    @db_relationships = Neo4jSchema.db_relationships
+    my_system_message = @@compliance_system_message
+    my_system_message = my_system_message.sub("###NODES###", @db_nodes)
+    my_system_message = my_system_message.sub("###RELATIONSHIPS###", @db_relationships)
+    cql = get_openai_response(input_cql, my_system_message)
+    puts ("# COMPLYING CQL: #{cql}\n")
+    cql
+  end
+
   def query_neo4j(cql)
     session = ActiveGraph::Base.driver.session
     begin
       result = session.run(cql)
       nodes = result.to_a
+      puts("# Nodes: #{nodes.length}")
       nodes
     ensure
       session.close
@@ -109,12 +160,14 @@ class ChatroomController < ApplicationController
   end
 
   def handle_user_query(user_input)
-    cql = translate_to_cql(user_input)
-    response = validate_cql(cql)
+    generated_cql = translate_to_cql(user_input)
+    response = validate_cql(generated_cql)
 
     if response.include?("Error:")
       return response
     end
+
+    cql = make_cql_comply(generated_cql)
     
     results = query_neo4j(cql)
     explanation = generate_explanation(user_input, results)
