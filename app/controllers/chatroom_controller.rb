@@ -1,25 +1,26 @@
 require 'openai'
 require 'neo4j_ruby_driver'
 require './config/initializers/neo4j'
+require 'json'
 
 class ChatroomController < ApplicationController
   
   @@request_system_message = "
-  You are a highly skilled system designed to convert natural language user requests into Cypher (CQL) queries for a Neo4j database. The user may ask questions or request information about any information within the database.
+  You are a highly skilled system designed to convert natural language user requests into Cypher (CQL) queries for a Neo4j database.
 
   **DATABASE_SCHEMA**
 
-  This is a JSON for describing the database nodes:
-  ###NODES###
-  
-  This is a JSON for describing the database relationships between nodes:
-  ###RELATIONSHIPS###
+  This is a JSON describing the database nodes: ###NODES###
+
+  This is a JSON describing the database relationships between nodes, including their directionality: ###RELATIONSHIPS###
 
   Your task is to:
-  1. Analyze the user request to understand the desired information.
-  2. Translate the user's request into an optimized CQL query that accurately retrieves data from the Neo4j database.
-  3. Generate only a valid Cypher query (CQL) based on the user's instructions. Do not include any comments, explanations, formatting, or additional text. Provide the query as plain text, with no leading or trailing characters.
 
+  1. Analyze the user request to understand the desired information.
+  2. Ensure strict adherence to relationship direction as specified in the database schema.
+  3. Translate the user's request into a valid and optimized CQL query. The query must accurately reflect the direction of relationships.
+  3. Generate only a valid Cypher query (CQL). Provide the query as plain text with no leading or trailing characters.
+  
   **EXAMPLE**
 
   ###EXAMPLE###
@@ -32,42 +33,12 @@ class ChatroomController < ApplicationController
   "
   
   @@compliance_system_message = "
-  You are a database expert specializing in Cypher Query Language (CQL) and schema design. Your task is to analyze the given CQL query and ensure it fully complies with the specified database schema.
+  You are an LLM specialized in generating Cypher (CQL) queries for a Neo4j database.
+  Your task is to:
 
-  **Tasks**:
-  
-  - Schema Validation:
-
-  Parse the provided DATABASE_SCHEMA JSON to extract node labels, relationship types, and property definitions.
-  Verify that all nodes, relationships, and properties in the query match the schema.
-  Ensure property data types are consistent with schema definitions.
-  
-  - Structural Consistency:
-
-  Ensure the query uses correct labels, relationships, and property names.
-  Verify the use of MATCH, WHERE, RETURN, and DISTINCT aligns with the schema structure and query intent.
-  
-  - Error Correction:
-
-  If the query contains elements not defined in the schema or uses incorrect syntax, correct these issues.
-  If any required elements are missing, add them.
-  Ensure all changes comply with the schema and best practices for CQL.
-  
-  - Response Format:
-
-  Output only the corrected Cypher query as plain text.
-  No comments, explanations, or formatting.
-  If the query is already valid and schema-compliant, return it unchanged.
-
-  **DATABASE_SCHEMA**
-
-  This is a JSON for describing the database nodes:
-  ###NODES###
-  
-  This is a JSON for describing the database relationships between nodes:
-  ###RELATIONSHIPS###
-
-  **IMPORTANT NOTE**: The direction of the relationships has a direct impact on the query's correctness.
+  1. Analyze the provided CQL query and error message.
+  2. Correct the CQL query to match the expected relationship direction and structure, as indicated in the error message.
+  3. Return only the corrected CQL query in plain text. Do not include any additional text, comments, explanations or code block delimiters.
   "
 
   @@explanation_system_message = "
@@ -78,6 +49,9 @@ class ChatroomController < ApplicationController
 
   # User request: ###USER_REQ###
   "
+
+  @@db_nodes = Neo4jSchema.db_nodes
+  @@db_relationships = Neo4jSchema.db_relationships
 
   def initialize()
     @@prompt_result_example ||= File.read(ENV['PROMPT_RESULT_EXAMPLE_PATH'])
@@ -108,11 +82,9 @@ class ChatroomController < ApplicationController
   end
 
   def translate_to_cql(user_input)
-    @db_nodes = Neo4jSchema.db_nodes
-    @db_relationships = Neo4jSchema.db_relationships
     my_system_message = @@request_system_message
-    my_system_message = my_system_message.sub("###NODES###", @db_nodes)
-    my_system_message = my_system_message.sub("###RELATIONSHIPS###", @db_relationships)
+    my_system_message = my_system_message.sub("###NODES###", @@db_nodes)
+    my_system_message = my_system_message.sub("###RELATIONSHIPS###", @@db_relationships)
     my_system_message = my_system_message.sub("###EXAMPLE###", @@prompt_result_example)
     cql = get_openai_response(user_input, my_system_message)
     puts ("# CQL: #{cql}\n")
@@ -125,13 +97,124 @@ class ChatroomController < ApplicationController
     response
   end
 
-  def make_cql_comply(input_cql)
-    @db_nodes = Neo4jSchema.db_nodes
-    @db_relationships = Neo4jSchema.db_relationships
+  def extract_patterns(cql_query)
+    result = []
+
+    forward_pattern = /\((\w+)(?::(\w+))?\)-\[:(\w+)\]->\((\w+)(?::(\w+))?\)/
+    result += cql_query.scan(forward_pattern).map { |match| match + ['->'] }
+
+    reverse_pattern = /\((\w+)(?::(\w+))?\)<-\[:(\w+)\]-\((\w+)(?::(\w+))?\)/
+    result += cql_query.scan(reverse_pattern).map { |match| match + ['<-'] }
+
+    result
+  end
+
+  def parse_json_with_bom_removal(json_string)
+    # Remove BOM if it exists
+    json_string = json_string.sub("\uFEFF", '')
+    JSON.parse(json_string)
+  end
+
+  def validate_relationships(cql_query)
+    result = { "valid": nil, "errors": [], "corrections": [] }
+    nodes_n_labels = {}
+    patterns = extract_patterns(cql_query)
+    relationships = parse_json_with_bom_removal(@@db_relationships)
+
+    patterns.each do |node1, label1, rel_type, node2, label2, direction|
+      relationship = relationships.find { |rel| rel["RelationshipType"] == rel_type }
+      if label1 != nil
+        nodes_n_labels[node1] = label1
+      else
+        if nodes_n_labels.key?(node1)
+          label1 = nodes_n_labels[node1]
+        end
+      end
+      if label2 != nil
+        nodes_n_labels[node2] = label2
+      else
+        if nodes_n_labels.key?(node2)
+          label2 = nodes_n_labels[node2]
+        end
+      end
+
+      # if direction == '->'
+      #   puts "#### (#{node1}:#{label1})-[:#{rel_type}]->(#{node2}:#{label2})"
+      # else
+      #   puts "#### (#{node1}:#{label1})<-[:#{rel_type}]-(#{node2}:#{label2})"
+      # end
+
+      # puts "# nodes_n_labels: #{nodes_n_labels.inspect}"
+  
+      unless relationship
+        return "Invalid relationship type: #{rel_type}"
+      end
+
+      expected_labels = if direction == '->'
+        [label1, label2]
+      else
+        [label2, label1]
+      end
+
+      unless relationship["StartNodeLabels"].include?(expected_labels[0]) && relationship["EndNodeLabels"].include?(expected_labels[1])
+        result[:valid] = false
+        result[:errors] << "Incorrect nodes for relationship #{rel_type}: expected #{relationship['StartNodeLabels']} -> #{relationship['EndNodeLabels']}, got #{expected_labels[0]} -> #{expected_labels[1]}"
+        correction = {
+          "before": [expected_labels[0], rel_type, expected_labels[1]],
+          "after": [relationship["StartNodeLabels"][0], rel_type, relationship["EndNodeLabels"][0]]
+        }
+        result[:corrections] << correction
+      end
+
+    end
+  
+    if result[:valid].nil?
+      result[:valid] = true
+    end
+    result
+  end
+
+  def fix_relationships(query, corrections)
+    corrections.each do |correction|
+      before = correction[:before]
+      after = correction[:after]
+  
+      before_start, before_rel, before_end = before
+      after_start, after_rel, after_end = after
+  
+      if query.include?("<-[:#{before_rel}]-")
+        before_pattern = /
+          \(\s*(\w*)\s*(?::#{before_end})?\s*\)\s*
+          <-\[:#{before_rel}\]-\s*
+          \(\s*(\w*)\s*(?::#{before_start})?\s*\)
+        /x
+      else
+        before_pattern = /
+          \(\s*(\w*)\s*(?::#{before_start})?\s*\)\s*
+          -\[:#{before_rel}\]->\s*
+          \(\s*(\w*)\s*(?::#{before_end})?\s*\)
+        /x
+      end
+
+      after_pattern = if query.include?("<-[:#{after_rel}]-")
+                      "(\\1:#{after_start})-[:#{after_rel}]->(\\2:#{after_end})"
+                    else
+                      "(\\1:#{after_end})<-[:#{after_rel}]-(\\2:#{after_start})"
+                    end
+
+      query.gsub!(before_pattern, after_pattern)
+    end
+  
+    query
+  end
+  
+  
+
+  def make_cql_comply(query, errors)
     my_system_message = @@compliance_system_message
-    my_system_message = my_system_message.sub("###NODES###", @db_nodes)
-    my_system_message = my_system_message.sub("###RELATIONSHIPS###", @db_relationships)
-    cql = get_openai_response(input_cql, my_system_message)
+    my_user_message = "**QUERY**\n\n#{query}\n\n**ERRORS**\n\n#{errors.join("\n")}"
+    puts "# ERRORS: #{errors.join("\n")}"
+    cql = get_openai_response(my_user_message, my_system_message)
     puts ("# COMPLYING CQL: #{cql}\n")
     cql
   end
@@ -167,7 +250,14 @@ class ChatroomController < ApplicationController
       return response
     end
 
-    cql = make_cql_comply(generated_cql)
+    validation = validate_relationships(generated_cql)
+    if validation[:valid] == false
+      puts ("# validation: #{validation.inspect}")
+      generated_cql = fix_relationships(generated_cql, validation[:corrections])
+      puts ("# corrected cql: #{generated_cql}")
+    end
+
+    cql = generated_cql
     
     results = query_neo4j(cql)
     explanation = generate_explanation(user_input, results)
