@@ -22,8 +22,9 @@ gem 'dotenv-rails', '~> 2.7'
 gem 'neo4j-ruby-driver'
 gem 'async', '<= 2.12'
 gem "activegraph", '~> 11.0'
-gem 'faraday', '~> 1.10'
+gem 'faraday', '~> 2.10'
 gem 'faraday-multipart', '~> 1.0'
+gem 'ollama-ai'
 
 # Use Redis adapter to run Action Cable in production
 # gem 'redis', '~> 4.0'
