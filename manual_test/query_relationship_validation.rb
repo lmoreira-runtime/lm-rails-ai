@@ -61,16 +61,16 @@ db_relationships = "[
 
 query = "MATCH (a:Apartamento)-[:LOCATED_IN]->(l:Location),
       (a)<-[:OWNS]-(o:Owner),
-      (ra:RealEstateAgent)<-[:REPRESENTS]-(o),
+      (ra:RealEstateAgent)-[:REPRESENTS]->(o:Owner),
       (ra)-[:WORKS_IN]->(l),
-      (a)-[:HAS_AMENITY]->(amenity:Amenity)
+      (a:Apartamento)-[:HAS_AMENITY]->(amenity:Amenity)
 WITH a, l, ra, COUNT(amenity) AS amenityCount
 WHERE amenityCount >= 3
 WITH l, AVG(a.price) AS avgPrice
-MATCH (a:Apartamento)-[:LOCATED_IN]->(l),
+MATCH (a:Apartamento)-[:LOCATED_IN]->(l:Location),
       (a)<-[:OWNS]-(o:Owner),
-      (ra:RealEstateAgent)-[:REPRESENTS]->(o),
-      (ra)-[:WORKS_IN]->(l)
+      (ra:RealEstateAgent)-[:REPRESENTS]->(o:Owner),
+      (ra:RealEstateAgent)<-[:WORKS_IN]-(l:Location)
 WHERE a.price < avgPrice
 RETURN a, l, ra 
 LIMIT 10
