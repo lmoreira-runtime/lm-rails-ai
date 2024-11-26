@@ -1,0 +1,47 @@
+﻿[
+  {
+    "Labels": [
+      "Movie"
+    ],
+    "AssociatedProperties": [
+      [
+        "title",
+        "tagline",
+        "released"
+      ],
+      [
+        "released",
+        "tagline",
+        "title"
+      ],
+      [
+        "tagline",
+        "title",
+        "released"
+      ],
+      [
+        "title",
+        "released",
+        "tagline"
+      ],
+      [
+        "title",
+        "released"
+      ]
+    ]
+  },
+  {
+    "Labels": [
+      "Person"
+    ],
+    "AssociatedProperties": [
+      [
+        "born",
+        "name"
+      ],
+      [
+        "name"
+      ]
+    ]
+  }
+]

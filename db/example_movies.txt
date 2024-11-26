@@ -1,0 +1,7 @@
+  # User Request: 
+  \"Who was involved in the movie Inception, and what roles or connections do they have with it?\"
+
+  # CQL Query: 
+  MATCH (movie:Movie {title: "Inception"})
+  OPTIONAL MATCH (person:Person)-[rel]->(movie)
+  RETURN movie, person, rel

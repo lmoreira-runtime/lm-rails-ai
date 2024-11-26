@@ -1,0 +1,10 @@
+  # User Request: 
+  \"give me one example of an apartment in Porto, its owner, the agent who works in the same location and represents the owner, and the apartment amenities\"
+
+  # CQL Query: 
+  MATCH (a:Apartamento)-[:LOCATED_IN]->(l:Location), 
+      (a)<-[:OWNS]-(o:Owner), 
+      (o)<-[:REPRESENTS]-(ra:RealEstateAgent)-[:WORKS_IN]->(l), 
+      (a)-[:HAS_AMENITY]->(amenity:Amenity) 
+  WHERE l.name = 'Porto' 
+  RETURN a, o, ra, amenity LIMIT 1
