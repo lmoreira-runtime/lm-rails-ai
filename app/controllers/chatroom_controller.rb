@@ -245,7 +245,7 @@ class ChatroomController < ApplicationController
         explanation = "WARNING: Potentially unreliable information.\n\n" + explanation
       end
     end
-
+    explanation.gsub! "\n", "</br>"
     return explanation
   end
 
