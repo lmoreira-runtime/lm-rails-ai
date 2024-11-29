@@ -32,6 +32,7 @@ def get_ollama_response(prompt, system_message, model) #llama3.2
     result = client.generate(
         { model: model,
         prompt: prompt2llm,
+        temperature: 0.0,
         stream: false }
     )
     response = result[0]['response'].strip.delete_prefix('"').delete_suffix('"')

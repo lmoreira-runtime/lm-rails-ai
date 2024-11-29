@@ -144,3 +144,64 @@ end
 
 query
 end
+
+def determine_query_complexity(query_structure)
+    puts "Determining query complexity..."
+    # Base weights for different components
+    weights = {
+      action: { "list" => 1, "count" => 2, "find" => 3 },
+      entities: 1, # Each entity adds 1 to the complexity
+      relationships: 2, # Each relationship adds 2 to the complexity
+      conditions: 2, # Each condition adds 2 to the complexity
+      sorting: 1, # Sorting adds 1 to the complexity
+      output: 1 # Each output attribute adds 1 to the complexity
+    }
+
+    # puts "Query structure: #{query_structure.inspect}"
+  
+    # Extract components from the query structure
+    action = query_structure["action"]
+    entities = query_structure["entities"] || []
+    relationships = query_structure["relationships"] || []
+    conditions = query_structure["conditions"] || {}
+    sorting = query_structure["sorting"]
+    output = query_structure["output"] || []
+
+    # puts "Action: #{action.inspect}"
+    # puts "Entities: #{entities.inspect}"
+    # puts "Relationships: #{relationships.inspect}"
+    # puts "Conditions: #{conditions.inspect}"
+    # puts "Sorting: #{sorting.inspect}"
+    # puts "Output: #{output.inspect}"
+  
+    # Calculate the complexity based on the structure
+    complexity_score = 0
+    complexity_score += weights[:action][action] if weights[:action].key?(action)
+    # puts "Complexity score action (#{action}): #{complexity_score}"
+    complexity_score += entities.size * weights[:entities]
+    # puts "Complexity score (#{entities.size}) entities: #{complexity_score}"
+    complexity_score += relationships.size * weights[:relationships]
+    # puts "Complexity score (#{relationships.size}) relationships: #{complexity_score}"
+    complexity_score += conditions.size * weights[:conditions]
+    # puts "Complexity score (#{conditions.size}) conditions: #{complexity_score}"
+    complexity_score += weights[:sorting] if sorting
+    # puts "Complexity score (#{sorting}) sorting: #{complexity_score}"
+    complexity_score += output.size * weights[:output]
+    # puts "Complexity score (#{output.size}) output: #{complexity_score}"
+
+    # puts "FINAL Complexity score: #{complexity_score}"
+  
+    # Normalize the score to a 1-5 scale
+    case complexity_score
+    when 0..5
+      1 # Very Simple
+    when 6..10
+      2 # Simple
+    when 11..15
+      3 # Moderate
+    when 16..20
+      4 # Complex
+    else
+      5 # Very Complex
+    end
+end
