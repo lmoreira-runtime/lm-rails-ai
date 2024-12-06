@@ -146,26 +146,27 @@ query
 end
 
 def determine_query_complexity(query_structure)
-    puts "Determining query complexity..."
-    # Base weights for different components
     weights = {
-      action: { "list" => 1, "count" => 2, "find" => 3 },
-      entities: 1, # Each entity adds 1 to the complexity
-      relationships: 2, # Each relationship adds 2 to the complexity
-      conditions: 2, # Each condition adds 2 to the complexity
-      sorting: 1, # Sorting adds 1 to the complexity
-      output: 1 # Each output attribute adds 1 to the complexity
+      action: { "list" => 1, "count" => 2, "find" => 3, "change" => -10000 },
+      entities: 1,
+      relationships: 2,
+      conditions: 2,
+      sorting: 1,
+      output: 1,
+      aggregation: 3,
+      nested: 4
     }
 
     # puts "Query structure: #{query_structure.inspect}"
   
-    # Extract components from the query structure
     action = query_structure["action"]
     entities = query_structure["entities"] || []
     relationships = query_structure["relationships"] || []
     conditions = query_structure["conditions"] || {}
     sorting = query_structure["sorting"]
     output = query_structure["output"] || []
+    aggregation = query_structure["aggregation"]
+    nested = query_structure["nested"]
 
     # puts "Action: #{action.inspect}"
     # puts "Entities: #{entities.inspect}"
@@ -174,25 +175,38 @@ def determine_query_complexity(query_structure)
     # puts "Sorting: #{sorting.inspect}"
     # puts "Output: #{output.inspect}"
   
-    # Calculate the complexity based on the structure
+    action_score = weights[:action][action] if weights[:action].key?(action)
+    entities_score = entities.size * weights[:entities]
+    relationships_score = relationships.size * weights[:relationships]
+    conditions_score = conditions.size * weights[:conditions]
+    sorting_score = sorting.present? ? weights[:sorting] : 0
+    outputs_score = output.size * weights[:output]
+    aggregation_score = aggregation ? weights[:aggregation] : 0
+    nested_score = nested ? weights[:nested] : 0
+    
+    # puts "Action score (#{action}): #{action_score}"
+    # puts "entities score (#{entities.size}) entities: #{entities_score}"
+    # puts "relationships score (#{relationships.size}) relationships: #{relationships_score}"
+    # puts "conditions score (#{conditions.size}) conditions: #{conditions_score}"
+    # puts "sorting score (#{sorting}) sorting: #{sorting_score}"
+    # puts "output score (#{output.size}) output: #{outputs_score}"
+    
     complexity_score = 0
-    complexity_score += weights[:action][action] if weights[:action].key?(action)
-    # puts "Complexity score action (#{action}): #{complexity_score}"
-    complexity_score += entities.size * weights[:entities]
-    # puts "Complexity score (#{entities.size}) entities: #{complexity_score}"
-    complexity_score += relationships.size * weights[:relationships]
-    # puts "Complexity score (#{relationships.size}) relationships: #{complexity_score}"
-    complexity_score += conditions.size * weights[:conditions]
-    # puts "Complexity score (#{conditions.size}) conditions: #{complexity_score}"
-    complexity_score += weights[:sorting] if sorting
-    # puts "Complexity score (#{sorting}) sorting: #{complexity_score}"
-    complexity_score += output.size * weights[:output]
-    # puts "Complexity score (#{output.size}) output: #{complexity_score}"
+    complexity_score += action_score
+    complexity_score += entities_score
+    complexity_score += relationships_score
+    complexity_score += conditions_score
+    complexity_score += sorting_score
+    complexity_score += outputs_score
+    complexity_score += aggregation_score
+    complexity_score += nested_score
 
-    # puts "FINAL Complexity score: #{complexity_score}"
+    puts "# Complexity score: #{complexity_score}"
   
     # Normalize the score to a 1-5 scale
     case complexity_score
+    when -100000..-1
+      nil
     when 0..5
       1 # Very Simple
     when 6..10
