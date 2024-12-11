@@ -144,3 +144,78 @@ end
 
 query
 end
+
+def determine_query_complexity(query_structure)
+    weights = {
+      action: { "list" => 1, "count" => 2, "find" => 3, "change" => -10000 },
+      entities: 1,
+      relationships: 2,
+      conditions: 2,
+      sorting: 1,
+      output: 1,
+      aggregation: 3,
+      nested: 4
+    }
+
+    # puts "Query structure: #{query_structure.inspect}"
+  
+    action = query_structure["action"]
+    entities = query_structure["entities"] || []
+    relationships = query_structure["relationships"] || []
+    conditions = query_structure["conditions"] || {}
+    sorting = query_structure["sorting"]
+    output = query_structure["output"] || []
+    aggregation = query_structure["aggregation"]
+    nested = query_structure["nested"]
+
+    # puts "Action: #{action.inspect}"
+    # puts "Entities: #{entities.inspect}"
+    # puts "Relationships: #{relationships.inspect}"
+    # puts "Conditions: #{conditions.inspect}"
+    # puts "Sorting: #{sorting.inspect}"
+    # puts "Output: #{output.inspect}"
+  
+    action_score = weights[:action][action] if weights[:action].key?(action)
+    entities_score = entities.size * weights[:entities]
+    relationships_score = relationships.size * weights[:relationships]
+    conditions_score = conditions.size * weights[:conditions]
+    sorting_score = sorting.present? ? weights[:sorting] : 0
+    outputs_score = output.size * weights[:output]
+    aggregation_score = aggregation ? weights[:aggregation] : 0
+    nested_score = nested ? weights[:nested] : 0
+    
+    # puts "Action score (#{action}): #{action_score}"
+    # puts "entities score (#{entities.size}) entities: #{entities_score}"
+    # puts "relationships score (#{relationships.size}) relationships: #{relationships_score}"
+    # puts "conditions score (#{conditions.size}) conditions: #{conditions_score}"
+    # puts "sorting score (#{sorting}) sorting: #{sorting_score}"
+    # puts "output score (#{output.size}) output: #{outputs_score}"
+    
+    complexity_score = 0
+    complexity_score += action_score
+    complexity_score += entities_score
+    complexity_score += relationships_score
+    complexity_score += conditions_score
+    complexity_score += sorting_score
+    complexity_score += outputs_score
+    complexity_score += aggregation_score
+    complexity_score += nested_score
+
+    puts "# Complexity score: #{complexity_score}"
+  
+    # Normalize the score to a 1-5 scale
+    case complexity_score
+    when -100000..-1
+      nil
+    when 0..5
+      1 # Very Simple
+    when 6..10
+      2 # Simple
+    when 11..15
+      3 # Moderate
+    when 16..20
+      4 # Complex
+    else
+      5 # Very Complex
+    end
+end
