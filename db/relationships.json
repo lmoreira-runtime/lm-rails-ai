@@ -18,6 +18,15 @@
     ]
   },
   {
+    "RelationshipType": "RENTS",
+    "StartNodeLabels": [
+      "Tenant"
+    ],
+    "EndNodeLabels": [
+      "Apartamento"
+    ]
+  },
+  {
     "RelationshipType": "WORKS_IN",
     "StartNodeLabels": [
       "RealEstateAgent"
@@ -33,6 +42,42 @@
     ],
     "EndNodeLabels": [
       "Owner"
+    ]
+  },
+  {
+    "RelationshipType": "ASSOCIATED_WITH",
+    "StartNodeLabels": [
+      "Contract"
+    ],
+    "EndNodeLabels": [
+      "Tenant"
+    ]
+  },
+  {
+    "RelationshipType": "ASSOCIATED_WITH",
+    "StartNodeLabels": [
+      "Contract"
+    ],
+    "EndNodeLabels": [
+      "Apartamento"
+    ]
+  },
+  {
+    "RelationshipType": "SUBMITTED_BY",
+    "StartNodeLabels": [
+      "MaintenanceRequest"
+    ],
+    "EndNodeLabels": [
+      "Tenant"
+    ]
+  },
+  {
+    "RelationshipType": "DEVELOPED_BY",
+    "StartNodeLabels": [
+      "Apartamento"
+    ],
+    "EndNodeLabels": [
+      "Developer"
     ]
   },
   {

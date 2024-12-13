@@ -134,7 +134,7 @@
       const chatBox = document.getElementById('chat-box');
       const userMessageElement = document.createElement('p');
       userMessageElement.classList.add('user-message');
-      userMessageElement.innerHTML = `<strong>You:</strong> ${userMessage}`;
+      userMessageElement.innerHTML = `<strong>Question:</strong> ${userMessage}`;
       chatBox.appendChild(userMessageElement);
 
       // Scroll to the bottom
@@ -157,7 +157,7 @@
         // Display the response from the bot
         const botMessageElement = document.createElement('p');
         botMessageElement.classList.add('bot-message');
-        botMessageElement.innerHTML = `<strong>Bot:</strong> ${data.response_message}`;
+        botMessageElement.innerHTML = `<strong>Query:</strong> ${data.response_message}`;
         chatBox.appendChild(botMessageElement);
 
         // Scroll to the bottom

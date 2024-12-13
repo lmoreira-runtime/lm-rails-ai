@@ -73,6 +73,8 @@ class ChatroomController < ApplicationController
       generated_query = "ERROR: operation not permitted"
     end
 
+    return generated_query
+
     # fixed_relationships_query = reliable_query
     # num_tries = 2
     # validation = validate_relationships(fixed_relationships_query, @@db_relationships)
