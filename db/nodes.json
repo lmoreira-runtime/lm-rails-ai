@@ -13,6 +13,19 @@
   },
   {
     "Labels": [
+      "Tenant"
+    ],
+    "AssociatedProperties": [
+      [
+        "lease_duration",
+        "name",
+        "contact_info",
+        "move_in_date"
+      ]
+    ]
+  },
+  {
+    "Labels": [
       "Type"
     ],
     "AssociatedProperties": [
@@ -76,6 +89,58 @@
         "name",
         "location",
         "contact_info"
+      ]
+    ]
+  },
+  {
+    "Labels": [
+      "Contract"
+    ],
+    "AssociatedProperties": [
+      [
+        "start_date",
+        "contract_id",
+        "end_date",
+        "monthly_rent",
+        "deposit"
+      ],
+      [
+        "deposit",
+        "start_date",
+        "contract_id",
+        "end_date",
+        "monthly_rent"
+      ]
+    ]
+  },
+  {
+    "Labels": [
+      "MaintenanceRequest"
+    ],
+    "AssociatedProperties": [
+      [
+        "description",
+        "date_submitted",
+        "status",
+        "request_id"
+      ],
+      [
+        "request_id",
+        "description",
+        "date_submitted",
+        "status"
+      ]
+    ]
+  },
+  {
+    "Labels": [
+      "Developer"
+    ],
+    "AssociatedProperties": [
+      [
+        "name",
+        "contact_info",
+        "founded_year"
       ]
     ]
   }

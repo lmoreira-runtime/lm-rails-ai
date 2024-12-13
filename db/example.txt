@@ -1,10 +1,17 @@
   # User Request: 
-  \"give me one example of an apartment in Porto, its owner, the agent who works in the same location and represents the owner, and the apartment amenities\"
+  \"What are the details of the first five apartments in the database, including their types, locations, owners, associated real estate agents, amenities, tenants, rental contracts, and developers?\"
 
   # CQL Query: 
-  MATCH (a:Apartamento)-[:LOCATED_IN]->(l:Location), 
-      (a)<-[:OWNS]-(o:Owner), 
-      (o)<-[:REPRESENTS]-(ra:RealEstateAgent)-[:WORKS_IN]->(l), 
-      (a)-[:HAS_AMENITY]->(amenity:Amenity) 
-  WHERE l.name = 'Porto' 
-  RETURN a, o, ra, amenity LIMIT 1
+  MATCH 
+  (a:Apartamento)-[:OF_TYPE]->(t:Type), 
+  (a)-[:LOCATED_IN]->(l:Location),
+  (o:Owner)-[:OWNS]->(a),
+  (agent:RealEstateAgent)-[:REPRESENTS]->(o),
+  (a)-[:HAS_AMENITY]->(amen:Amenity),
+  (agent)-[:WORKS_IN]->(l),
+  (tn:Tenant)-[:RENTS]->(a), 
+  (c:Contract)-[:ASSOCIATED_WITH]->(a),
+  (c)-[:ASSOCIATED_WITH]->(tn),
+  (a)-[:DEVELOPED_BY]->(dev:Developer)
+  WHERE a.index <= 5
+  RETURN a, t, l, o, agent, amen, tn, c, dev;
