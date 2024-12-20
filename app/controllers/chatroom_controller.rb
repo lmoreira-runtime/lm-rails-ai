@@ -1,13 +1,7 @@
 require './app/controllers/src/llms'
-require './app/controllers/src/cql'
 require './app/controllers/src/db'
 require './app/controllers/src/json'
-require './app/controllers/src/lvl1'
-require './app/controllers/src/lvl2'
-require './app/controllers/src/lvl3'
-require './app/controllers/src/lvl4'
-require './app/controllers/src/lvl5'
-require './app/controllers/src/prompts'
+require './app/controllers/src/query_generation'
 require 'neo4j_ruby_driver'
 require './config/initializers/neo4j'
 
@@ -27,16 +21,6 @@ class ChatroomController < ApplicationController
 
   private
 
-  def analyze_user_request(user_input)
-    my_system_message = $user_request_analysis_system_message
-    my_system_message = my_system_message.sub("###NODES###", @@db_nodes)
-    my_system_message = my_system_message.sub("###RELATIONSHIPS###", @@db_relationships)
-    result = get_openai_response(user_input, my_system_message, "gpt-4o")
-    # result = get_ollama_response(user_input, my_system_message, "llama3.1")
-    puts ("# JSON: #{result}\n")
-    result
-  end
-
   def generate_explanation(user_input, nodes)
     nodes = nodes.map do |node|
       node.to_h
@@ -49,31 +33,9 @@ class ChatroomController < ApplicationController
   end
 
   def handle_user_query(user_input)
-    extracted_components = analyze_user_request(user_input)
-    extracted_components_hash = parse_json_with_bom_removal(extracted_components)
-    complexity = determine_query_complexity(extracted_components_hash)
+    generated_query = query_generation(user_input)
 
-    case complexity
-    when 1
-      puts "** LEVEL 1 **"
-      generated_query = generate_query_lvl1(user_input, extracted_components_hash)
-    when 2
-      puts "** LEVEL 2 **"
-      generated_query = generate_query_lvl2(user_input, extracted_components_hash)
-    when 3
-      puts "** LEVEL 3 **"
-      generated_query = generate_query_lvl3(user_input, extracted_components_hash)
-    when 4
-      puts "** LEVEL 4 **"
-      generated_query = generate_query_lvl4(user_input, extracted_components_hash)
-    when 5
-      puts "** LEVEL 5 **"
-      generated_query = generate_query_lvl5(user_input, extracted_components_hash)
-    else
-      generated_query = "ERROR: operation not permitted"
-    end
-
-    return generated_query
+    # return generated_query
 
     # fixed_relationships_query = reliable_query
     # num_tries = 2

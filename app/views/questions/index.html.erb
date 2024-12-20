@@ -1,0 +1,28 @@
+<!-- app/views/questions/index.html.erb -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+<h1>Imported Questions</h1>
+<!-- Buttons for navigation -->
+<div style="text-align: right; margin-right: 20px; ">
+  <%= link_to "Back to Chatroom", root_path, class: 'btn btn-primary' %>
+  <%= link_to 'Import Questions', new_question_path, class: 'btn btn-primary'  %>
+  <%= link_to 'Process Questions', questions_preprocess_path, class: 'btn btn-secondary' %> 
+</div>
+</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">Question</th>
+      <th scope="col">Processed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @questions.each do |question| %>
+      <tr>
+        <td><%= question.id %></td>
+        <td><%= question.properties[:question] %></td>
+        <td><%= question.properties[:processed] %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

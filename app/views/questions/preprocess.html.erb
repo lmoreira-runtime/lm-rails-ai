@@ -1,0 +1,27 @@
+<!-- app/views/questions/index.html.erb -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+<h1>Questions to be processed</h1>
+<!-- Buttons for navigation -->
+<div style="text-align: right; margin-right: 20px; ">
+  <%= link_to "Back to Imported Questions", questions_path, class: 'btn btn-primary' %>
+  <%= link_to 'Go', questions_processing_path, class: 'btn btn-success' %>
+</div>
+</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">Question</th>
+      <th scope="col">To Be Processed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @questions.each do |question| %>
+      <tr>
+        <td><%= question.id %></td>
+        <td><%= question.properties[:question] %></td>
+        <td><%= question.properties[:to_be_processed] %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

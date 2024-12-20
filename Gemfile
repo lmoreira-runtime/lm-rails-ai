@@ -21,13 +21,18 @@ gem 'ruby-openai'
 gem 'dotenv-rails', '~> 2.7'
 gem 'neo4j-ruby-driver'
 gem 'async', '<= 2.12'
-gem "activegraph", '~> 11.0'
-gem 'faraday', '~> 2.10'
+gem "activegraph", '~> 11.4'
+#gem 'faraday', '~> 2.10'
+gem 'faraday', '~> 1.1'
 gem 'faraday-multipart', '~> 1.0'
-gem 'ollama-ai'
+# gem 'ollama-ai'
+gem 'neo4j', '~> 9.6.1'
+gem 'neo4j-core'
+gem 'neo4j-rake_tasks'
+gem 'sidekiq'
 
 # Use Redis adapter to run Action Cable in production
-# gem 'redis', '~> 4.0'
+gem 'redis', '~> 4.0'
 # Use Active Model has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 

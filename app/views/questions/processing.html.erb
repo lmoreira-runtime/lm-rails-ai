@@ -1,0 +1,39 @@
+<div id="processing">
+  <%= image_tag 'w200.webp', alt: 'Processing...' %>
+</div>
+<script>
+  const jobId = "<%= params[:job_id] %>";
+
+  const startTask = async () => {
+      try {
+ 
+        // Send a request to start the task
+        const response = await fetch('/questions/start', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const { job_id } = await response.json();
+
+        // Poll for the task status
+        checkJobStatus(job_id);
+      } catch (error) {
+        console.error('Error starting task:', error);
+        alert('Failed to start the task. Please try again.');
+      }
+    };
+
+    const checkJobStatus = async (jobId) => {
+      const interval = setInterval(async () => {
+        const response = await fetch(`/questions/status?job_id=${jobId}`);
+        const { status } = await response.json();
+
+        if (status === 'completed') {
+          clearInterval(interval);
+          window.location.href = "<%= questions_path %>";
+        }
+      }, 2000);
+    };
+
+    startTask();
+
+</script>

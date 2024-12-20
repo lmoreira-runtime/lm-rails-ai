@@ -4,6 +4,18 @@ require './app/controllers/src/cql'
 require './app/controllers/src/llms'
 require './app/controllers/src/json'
 
+def analyze_user_request(user_input)
+    db_nodes = Neo4jSchema.db_nodes
+    db_relationships = Neo4jSchema.db_relationships
+    my_system_message = $user_request_analysis_system_message
+    my_system_message = my_system_message.sub("###NODES###", db_nodes)
+    my_system_message = my_system_message.sub("###RELATIONSHIPS###", db_relationships)
+    result = get_openai_response(user_input, my_system_message, "gpt-4o")
+    # result = get_ollama_response(user_input, my_system_message, "llama3.1")
+    puts ("# JSON: #{result}\n")
+    result
+end
+
 def translate_to_cql(user_input, extracted_components, mapping = nil)
     db_nodes = Neo4jSchema.db_nodes
     db_relationships = Neo4jSchema.db_relationships

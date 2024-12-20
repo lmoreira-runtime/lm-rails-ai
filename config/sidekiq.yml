@@ -1,0 +1,6 @@
+# config/sidekiq.yml
+:concurrency: 5
+:queues:
+  - default
+:redis:
+  :url: redis://localhost:6379/0

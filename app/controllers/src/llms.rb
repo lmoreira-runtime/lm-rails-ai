@@ -1,5 +1,5 @@
 require 'openai'
-require 'ollama-ai'
+#require 'ollama-ai'
 
 ## OpenAI
 def get_openai_response(prompt, system_message, model)
@@ -19,25 +19,25 @@ def get_openai_response(prompt, system_message, model)
 end
 
 ## Ollama
-def get_ollama_response(prompt, system_message, model) #llama3.2
-    client = Ollama.new(
-        credentials: { address: 'http://localhost:11434' },
-        options: { server_sent_events: true }
-    )
+# def get_ollama_response(prompt, system_message, model) #llama3.2
+#     client = Ollama.new(
+#         credentials: { address: 'http://localhost:11434' },
+#         options: { server_sent_events: true }
+#     )
 
-    prompt2llm = system_message + "\n\n" + prompt
+#     prompt2llm = system_message + "\n\n" + prompt
 
-    #puts "# prompt2llm: #{prompt2llm}"
+#     #puts "# prompt2llm: #{prompt2llm}"
 
-    result = client.generate(
-        { model: model,
-        prompt: prompt2llm,
-        temperature: 0.0,
-        stream: false }
-    )
-    response = result[0]['response'].strip.delete_prefix('"').delete_suffix('"')
-    #puts "# response: #{response}"
-    response
-    rescue => e
-        "Error: #{e.message}"
-end
+#     result = client.generate(
+#         { model: model,
+#         prompt: prompt2llm,
+#         temperature: 0.0,
+#         stream: false }
+#     )
+#     response = result[0]['response'].strip.delete_prefix('"').delete_suffix('"')
+#     #puts "# response: #{response}"
+#     response
+#     rescue => e
+#         "Error: #{e.message}"
+# end
