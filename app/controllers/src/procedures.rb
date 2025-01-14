@@ -82,7 +82,7 @@ def map_data_model(user_input, extracted_components)
     my_system_message = my_system_message.sub("###NODES###", db_nodes)
     my_system_message = my_system_message.sub("###RELATIONSHIPS###", db_relationships)
     my_user_message = "**User Request**: #{user_input}\n\n**Extracted Components**: #{extracted_components}"
-    result_mapping = get_openai_response(user_input, my_system_message, "gpt-4o-mini")
+    result_mapping = get_openai_response(my_user_message, my_system_message, "gpt-4o-mini")
     # result = get_ollama_response(my_user_message, my_system_message, "llama3.1")
     puts ("# MAPPING: #{result_mapping}\n")
     result_mapping
