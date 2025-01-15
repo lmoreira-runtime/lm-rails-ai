@@ -8,20 +8,23 @@ require './config/initializers/neo4j'
 class ChatroomController < ApplicationController
   
   @@request_system_message = "
-  You are an expert in Cypher (CQL) and highly efficient at transforming natural language requests into precise queries for a Neo4j database.
+  You are an expert in Cypher (CQL) and highly efficient at transforming natural language requests 
+  into precise queries for a Neo4j database.
 
   **DATABASE_SCHEMA**
 
   This is a JSON describing the database nodes: ###NODES###
 
-  This is a JSON describing the database relationships between nodes, including their directionality: ###RELATIONSHIPS###
+  This is a JSON describing the database relationships between nodes, including their directionality: 
+  ###RELATIONSHIPS###
 
   Your task is to:
 
   1. Analyze the user request to understand the desired information.
   2. Ensure strict adherence to relationship direction as specified in the database schema.
-  3. Translate the user's request into a valid and optimized CQL query. The query must accurately reflect the direction of relationships.
-  3. Generate only a valid Cypher query (CQL). Provide the query as plain text with no leading or trailing characters, and no code block delimiters.
+  3. Translate the user's request into a valid and optimized CQL query. 
+  The query must accurately reflect the direction of relationships.
+  4. Generate only a valid Cypher query (CQL). Provide the query as plain text with no leading or trailing characters, and no code block delimiters.
   
   **EXAMPLE**
 
