@@ -35,22 +35,6 @@ class ChatroomController < ApplicationController
   def handle_user_query(user_input)
     generated_query = query_generation(user_input)
 
-    # return generated_query
-
-    # fixed_relationships_query = reliable_query
-    # num_tries = 2
-    # validation = validate_relationships(fixed_relationships_query, @@db_relationships)
-    # while validation[:valid] == false and num_tries > 0
-    #   num_tries -= 1
-    #   # puts ("# Relationships validation: #{validation.inspect}")
-    #   fixed_relationships_query = fix_relationships(fixed_relationships_query, validation[:corrections])
-    #   validation = validate_relationships(fixed_relationships_query, @@db_relationships)
-    # end
-
-    # if num_tries < 2
-    #   puts ("# FIXED RELATIONSHIPS CQL: #{fixed_relationships_query}")
-    # end
-
     error_free_cql = generated_query
 
     num_tries = 3
@@ -62,15 +46,10 @@ class ChatroomController < ApplicationController
       results = query_neo4j(error_free_cql)
     end
 
-    #puts "# results: #{results}"
     if results[:result] == nil
       explanation = "An error has occurred. Please try again."
     else
       explanation = generate_explanation(user_input, results[:result])
-      #puts "# explanation: #{explanation}"
-      # if reliable == false
-      #   explanation = "WARNING: Potentially unreliable information.\n\n" + explanation
-      # end
     end
     explanation.gsub! "\n", "</br>"
     return explanation
